@@ -12,6 +12,7 @@ import pickle
 import numpy as np
 
 from datafolder.folder import Test_Dataset
+from datafolder.folder import Train_Dataset
 from net import *
 
 
@@ -77,15 +78,15 @@ def load_network(network):
 # ---------
 image_datasets = {}
 
-image_datasets['gallery'] = Test_Dataset(data_dir, dataset_name=dataset_dict[args.dataset],
-                                         query_gallery='gallery')
+image_datasets['train'] = Train_Dataset(data_dir, dataset_name=dataset_dict[args.dataset],
+                                          train_val='train')
 image_datasets['query'] = Test_Dataset(data_dir, dataset_name=dataset_dict[args.dataset],
                                        query_gallery='query')
 dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=args.batch_size,
                                              shuffle=False, num_workers=args.num_workers)
-              for x in ['gallery', 'query']}
-dataset_sizes = {x: len(image_datasets[x]) for x in ['gallery', 'query']}
-labels_name = image_datasets['gallery'].labels()
+              for x in ['train', 'query']}
+dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'query']}
+labels_name = image_datasets['train'].labels()
 ######################################################################
 # Model
 # ---------
@@ -103,13 +104,14 @@ since = time.time()
 
 overall_acc = 0
 each_acc = 0
-N=dataset_sizes['query']
+N=dataset_sizes['train']
 inter_feature=np.zeros((N,1024))
 start=0
 # Iterate over data.
-for count, data in enumerate(dataloaders['query']):
+for count, data in enumerate(dataloaders['train']):
     # get the inputs
-    images, labels, ids, name = data
+    #images, labels, ids, name = data
+    images, ids, labels, id, cam, name = data
     #print(name)
     # wrap them in Variable
     if use_gpu:
@@ -130,22 +132,22 @@ for count, data in enumerate(dataloaders['query']):
     each_acc += torch.sum(positive, dim=0).float()
     running_corrects = torch.sum(positive).item() / labels.size(1)
     overall_acc += running_corrects
-    print('step : ({}/{})  |  Acc : {:.4f}'.format(count*args.batch_size, dataset_sizes['query'],
+    print('step : ({}/{})  |  Acc : {:.4f}'.format(count*args.batch_size, dataset_sizes['train'],
                                                    running_corrects/labels.size(0)))
 
-np.save('/home/litongxin/Person-Attribute-Recognition-MarketDuke/inter_query.npy',inter_feature)
-overall_acc = overall_acc / dataset_sizes['query']
-each_acc = each_acc / dataset_sizes['query']
-
-print('{} Acc: {:.4f}'.format('Overall', overall_acc))
-result = {
-    'overall_acc'   :   overall_acc,
-    'each_acc'      :   each_acc.cpu().numpy(),
-    'labels_name'   :   labels_name,
-}
-scipy.io.savemat(os.path.join(result_dir, 'acc.mat'), result)
-
-time_elapsed = time.time() - since
-print('Testing complete in {:.0f}m {:.0f}s'.format(
-            time_elapsed // 60, time_elapsed % 60))
+np.save('/home/litongxin/Person-Attribute-Recognition-MarketDuke/inter_train.npy',inter_feature)
+# overall_acc = overall_acc / dataset_sizes['query']
+# each_acc = each_acc / dataset_sizes['query']
+#
+# print('{} Acc: {:.4f}'.format('Overall', overall_acc))
+# result = {
+#     'overall_acc'   :   overall_acc,
+#     'each_acc'      :   each_acc.cpu().numpy(),
+#     'labels_name'   :   labels_name,
+# }
+# scipy.io.savemat(os.path.join(result_dir, 'acc.mat'), result)
+#
+# time_elapsed = time.time() - since
+# print('Testing complete in {:.0f}m {:.0f}s'.format(
+#             time_elapsed // 60, time_elapsed % 60))
 
