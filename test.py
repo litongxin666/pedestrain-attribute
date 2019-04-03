@@ -86,7 +86,7 @@ dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=args
                                              shuffle=False, num_workers=args.num_workers)
               for x in ['train', 'query']}
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'query']}
-labels_name = image_datasets['train'].labels()
+labels_name = image_datasets['query'].labels()
 ######################################################################
 # Model
 # ---------
@@ -104,14 +104,14 @@ since = time.time()
 
 overall_acc = 0
 each_acc = 0
-N=dataset_sizes['train']
+N=dataset_sizes['query']
 inter_feature=np.zeros((N,1024))
 start=0
 # Iterate over data.
-for count, data in enumerate(dataloaders['train']):
+for count, data in enumerate(dataloaders['query']):
     # get the inputs
-    #images, labels, ids, name = data
-    images, ids, labels, id, cam, name = data
+    images, labels, ids, name = data
+    #images, ids, labels, id, cam, name = data
     #print(name)
     # wrap them in Variable
     if use_gpu:
@@ -132,10 +132,10 @@ for count, data in enumerate(dataloaders['train']):
     each_acc += torch.sum(positive, dim=0).float()
     running_corrects = torch.sum(positive).item() / labels.size(1)
     overall_acc += running_corrects
-    print('step : ({}/{})  |  Acc : {:.4f}'.format(count*args.batch_size, dataset_sizes['train'],
+    print('step : ({}/{})  |  Acc : {:.4f}'.format(count*args.batch_size, dataset_sizes['query'],
                                                    running_corrects/labels.size(0)))
 
-np.save('/home/litongxin/Person-Attribute-Recognition-MarketDuke/inter_train.npy',inter_feature)
+np.save('/home/litongxin/Person-Attribute-Recognition-MarketDuke/inter_query.npy',inter_feature)
 # overall_acc = overall_acc / dataset_sizes['query']
 # each_acc = each_acc / dataset_sizes['query']
 #
